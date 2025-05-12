@@ -1,19 +1,19 @@
 {
   "files": {
     "main.css": "/BalanceWheel_HW/static/css/main.4be423d6.css",
-    "main.js": "/BalanceWheel_HW/static/js/main.1271954a.js",
+    "main.js": "/BalanceWheel_HW/static/js/main.d65b004e.js",
     "static/js/977.063ee3b3.chunk.js": "/BalanceWheel_HW/static/js/977.063ee3b3.chunk.js",
     "static/js/455.63ff66c0.chunk.js": "/BalanceWheel_HW/static/js/455.63ff66c0.chunk.js",
     "static/js/453.5dc1fefc.chunk.js": "/BalanceWheel_HW/static/js/453.5dc1fefc.chunk.js",
     "index.html": "/BalanceWheel_HW/index.html",
     "main.4be423d6.css.map": "/BalanceWheel_HW/static/css/main.4be423d6.css.map",
-    "main.1271954a.js.map": "/BalanceWheel_HW/static/js/main.1271954a.js.map",
+    "main.d65b004e.js.map": "/BalanceWheel_HW/static/js/main.d65b004e.js.map",
     "977.063ee3b3.chunk.js.map": "/BalanceWheel_HW/static/js/977.063ee3b3.chunk.js.map",
     "455.63ff66c0.chunk.js.map": "/BalanceWheel_HW/static/js/455.63ff66c0.chunk.js.map",
     "453.5dc1fefc.chunk.js.map": "/BalanceWheel_HW/static/js/453.5dc1fefc.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.4be423d6.css",
-    "static/js/main.1271954a.js"
+    "static/js/main.d65b004e.js"
   ]
 }
