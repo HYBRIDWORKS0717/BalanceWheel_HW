@@ -84,11 +84,15 @@ const RadarChartComparison: React.FC = () => {
   const [futureText, setFutureText] = useState(new Array(8).fill(""));
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   // 🔄 自動復元
   useEffect(() => {
-    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (!raw) return;
+  const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+  if (!raw) {
+    setIsLoaded(true); // ← これで初期化モードでも保存可能に
+    return;
+  }
     try {
       const data: SaveData = JSON.parse(raw);
       setUserName(data.userName);
@@ -100,11 +104,15 @@ const RadarChartComparison: React.FC = () => {
       setFutureText(data.futureText);
     } catch (e) {
       console.error("保存データの読み込みに失敗しました", e);
-    }
-  }, []);
+  } finally {
+    setIsLoaded(true); // ✅ 必ず実行されるようにここに書く！
+  }
+}, []);
 
   // 💾 自動保存
   useEffect(() => {
+    if (!isLoaded) return;
+
     const data: SaveData = {
       userName,
       userAge,
@@ -122,7 +130,8 @@ const RadarChartComparison: React.FC = () => {
     currentValues,
     currentText,
     futureValues,
-    futureText
+    futureText,
+    isLoaded
   ]);
 
   const handleSliderChange = (values: number[], setValues: (v: number[]) => void, index: number, newValue: number) => {
