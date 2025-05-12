@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Radar } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -58,6 +58,18 @@ const getFormattedDate = () => {
   return `${year}${month}${day}`;
 };
 
+type SaveData = {
+  userName: string;
+  userAge: number | "";
+  categories: string[];
+  currentValues: number[];
+  currentText: string[];
+  futureValues: number[];
+  futureText: string[];
+};
+
+const LOCAL_STORAGE_KEY = "balanceWheelAutoSave";
+
 const RadarChartComparison: React.FC = () => {
   const [userName, setUserName] = useState("");
   const [userAge, setUserAge] = useState<number | "">("");
@@ -72,6 +84,46 @@ const RadarChartComparison: React.FC = () => {
   const [futureText, setFutureText] = useState(new Array(8).fill(""));
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+
+  // 🔄 自動復元
+  useEffect(() => {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (!raw) return;
+    try {
+      const data: SaveData = JSON.parse(raw);
+      setUserName(data.userName);
+      setUserAge(data.userAge);
+      setCategories(data.categories);
+      setCurrentValues(data.currentValues);
+      setCurrentText(data.currentText);
+      setFutureValues(data.futureValues);
+      setFutureText(data.futureText);
+    } catch (e) {
+      console.error("保存データの読み込みに失敗しました", e);
+    }
+  }, []);
+
+  // 💾 自動保存
+  useEffect(() => {
+    const data: SaveData = {
+      userName,
+      userAge,
+      categories,
+      currentValues,
+      currentText,
+      futureValues,
+      futureText,
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+  }, [
+    userName,
+    userAge,
+    categories,
+    currentValues,
+    currentText,
+    futureValues,
+    futureText
+  ]);
 
   const handleSliderChange = (values: number[], setValues: (v: number[]) => void, index: number, newValue: number) => {
     const newArr = [...values];
@@ -145,39 +197,39 @@ const RadarChartComparison: React.FC = () => {
   const exportToExcel = async () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("バランスホイール");
-  
+
     worksheet.getCell('A1').value = "名前";
     worksheet.getCell('B1').value = userName;
     worksheet.getCell('A2').value = "年齢";
     worksheet.getCell('B2').value = userAge;
     worksheet.getCell('A3').value = "出力日";
     worksheet.getCell('B3').value = getFormattedDate();
-  
+
     let dataStartRow = 5;
-  
+
     if (printRef.current) {
       const canvas = await html2canvas(printRef.current, { useCORS: true });
       const dataUrl = canvas.toDataURL("image/png");
-  
+
       const image = workbook.addImage({ base64: dataUrl, extension: "png" });
-  
+
       const imageWidth = canvas.width;
       const imageHeight = canvas.height;
       const excelImageWidth = imageWidth * 0.75;
       const excelImageHeight = imageHeight * 0.75;
-  
+
       worksheet.addImage(image, {
         tl: { col: 0, row: 5 },
         ext: { width: excelImageWidth, height: excelImageHeight }
       });
-  
+
       const estimatedImageRows = Math.ceil(excelImageHeight / 20);
-      dataStartRow = 5 + estimatedImageRows + 5; // ← 余白多めで安全
+      dataStartRow = 5 + estimatedImageRows + 5;
     }
-  
+
     worksheet.spliceRows(dataStartRow, 0, []);
     worksheet.getRow(dataStartRow).height = 22;
-  
+
     const headers = [
       { title: "カテゴリ", color: "FFCCCCCC" },
       { title: "現在の満足度", color: "FF00DA8F" },
@@ -185,10 +237,10 @@ const RadarChartComparison: React.FC = () => {
       { title: "未来の満足度", color: "FF0087B8" },
       { title: "未来の状態目標", color: "FF0087B8" }
     ];
-  
+
     const headerRow = worksheet.getRow(dataStartRow);
     headerRow.values = headers.map(h => h.title);
-  
+
     headerRow.eachCell((cell, colNumber) => {
       const bgColor = headers[colNumber - 1]?.color || "FFFFFFFF";
       cell.fill = {
@@ -214,7 +266,7 @@ const RadarChartComparison: React.FC = () => {
       };
     });
     headerRow.commit();
-  
+
     categories.forEach((cat, i) => {
       const rowIndex = dataStartRow + 1 + i;
       const row = worksheet.getRow(rowIndex);
@@ -226,12 +278,11 @@ const RadarChartComparison: React.FC = () => {
         futureText[i]
       ];
       row.eachCell((cell, colNumber) => {
-        // デフォルトの設定
         cell.alignment = {
           vertical: 'top',
           wrapText: true,
           horizontal:
-            colNumber === 1 || colNumber === 2 || colNumber === 4 ? 'center' : 'left' // ←ここで中央揃えを指定
+            colNumber === 1 || colNumber === 2 || colNumber === 4 ? 'center' : 'left'
         };
         cell.border = {
           top: { style: 'thin' },
@@ -242,13 +293,13 @@ const RadarChartComparison: React.FC = () => {
       });
       row.commit();
     });
-  
+
     worksheet.getColumn(1).width = 20;
     worksheet.getColumn(2).width = 15;
     worksheet.getColumn(3).width = 30;
     worksheet.getColumn(4).width = 15;
     worksheet.getColumn(5).width = 30;
-  
+
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: "application/octet-stream" });
     saveAs(blob, `バランスホイール_${getFormattedDate()}.xlsx`);
@@ -321,21 +372,21 @@ const RadarChartComparison: React.FC = () => {
                       />
                     </Grid>
                     <Grid item xs={12} sm={2}>
-                    <Slider
-                      size="small"
-                      value={chart.values[idx]}
-                      max={10}
-                      min={1}
-                      onChange={(_, newVal) => handleSliderChange(chart.values, chart.setValues, idx, newVal as number)}
-                      sx={{
-                      color: chart.title === "現在のバランスホイール" ? "#00da8f" : "#0087b8",
-                      height: 6,
-                      '& .MuiSlider-thumb': {
-                      width: 14,
-                      height: 14
-                        }
-                      }}
-                    />
+                      <Slider
+                        size="small"
+                        value={chart.values[idx]}
+                        max={10}
+                        min={1}
+                        onChange={(_, newVal) => handleSliderChange(chart.values, chart.setValues, idx, newVal as number)}
+                        sx={{
+                          color: chart.title === "現在のバランスホイール" ? "#00da8f" : "#0087b8",
+                          height: 6,
+                          '& .MuiSlider-thumb': {
+                            width: 14,
+                            height: 14
+                          }
+                        }}
+                      />
                     </Grid>
                     <Grid item xs={12} sm={5}>
                       <TextField
